@@ -1,0 +1,55 @@
+--1
+--1.1
+CREATE Table Mitarbeiter ( 
+	MitId char(3) PRIMARY KEY,
+	MiTName VARCHAR(20) NOT NULL,
+	MitVorname varchar(20),
+	MitGebDat Date NOT NULL,
+	MitJob varchar(20) NOT NULL,
+	MitStundensat smallmoney,
+	MitEinsatzort varchar(20)
+	)
+
+
+CREATE TABLE Kunde(
+KunNr Int PRIMARY KEY Not Null,
+KunName varchar(20) Not Null,
+KunOrt varchar(20) Not Null,
+KunPLZ char(5) Not Null,
+KunStrasse varchar(20) Not Null
+)
+
+CREATE TABLE Ersatzteil ( 
+EtID char(5) PRIMARY KEY Not Null,
+EtBezeichnung varchar(100) Not Null,
+EtPreis smallmoney Not Null,
+EtAnzLager Int Not Null,
+EtHersteller varchar(30) Not Null
+)
+
+
+--1.2
+INSERT INTO Mitarbeiter SELECT * FROM trommelhelden..quelleMitarbeiter
+INSERT INTO Kunde SELECT * FROM trommelhelden..quelleKunde
+INSERT INTO Ersatzteil SELECT * FROM trommelhelden..quelleErsatzteil
+
+
+SELECT * FROM Mitarbeiter
+SELECT * FROM Kunde
+SELECT * FROM Ersatzteil
+
+--1.3
+SELECT * INTO Auftrag FROM trommelhelden..quelleAuftrag
+SELECT * INTO Montage FROM trommelhelden..quelleMontage
+
+--1.4
+Alter TABLE Auftrag ADD PRIMARY KEY (AufNr);
+
+Alter TABLE Auftrag ADD Foreign KEY (MitID) References Mitarbeiter(MitID);
+Alter TABLE Auftrag ADD Foreign KEY (KunNr) References Kunde(KunNr); 
+
+Alter TABLE Montage ADD PRIMARY KEY (AufNr,EtID);
+Alter TABLE Montage ADD Foreign KEY (EtID) References Ersatzteil(EtID);
+Alter TABLE Auftrag ADD Foreign KEY (AufNr) References Auftrag(AufNr);
+
+--1.5
