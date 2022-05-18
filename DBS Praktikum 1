@@ -44,12 +44,26 @@ SELECT * INTO Montage FROM trommelhelden..quelleMontage
 
 --1.4
 Alter TABLE Auftrag ADD PRIMARY KEY (AufNr);
-
 Alter TABLE Auftrag ADD Foreign KEY (MitID) References Mitarbeiter(MitID);
 Alter TABLE Auftrag ADD Foreign KEY (KunNr) References Kunde(KunNr); 
 
 Alter TABLE Montage ADD PRIMARY KEY (AufNr,EtID);
 Alter TABLE Montage ADD Foreign KEY (EtID) References Ersatzteil(EtID);
-Alter TABLE Auftrag ADD Foreign KEY (AufNr) References Auftrag(AufNr);
+Alter TABLE Montage ADD Foreign KEY (AufNr) References Auftrag(AufNr); 
 
---1.5
+--2.1
+--a)
+Select * From Kunde WHERE KunOrt = 'Radebeul';
+--c)
+Select * From Ersatzteil Where EtBezeichnung Like 'S%';
+--d)
+Select * From Auftrag WHERE Dauer <= 3 AND Dauer >= 2 OR Anfahrt >= 80;
+--e)
+Select MiTName, MitJob From Mitarbeiter Where MitEinsatzort = 'Radebeul' Order By MiTName;
+--f)
+Select * From Auftrag Where Dauer is NULL;
+--g)
+Select Aufnr, (Anfahrt * 2.5) As Anfahrtskosten From Auftrag Where Dauer is not NULL;
+
+--2.2 
+
