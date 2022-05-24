@@ -66,4 +66,34 @@ Select * From Auftrag Where Dauer is NULL;
 Select Aufnr, (Anfahrt * 2.5) As Anfahrtskosten From Auftrag Where Dauer is not NULL;
 
 --2.2 
+--a)
+Select MiTName, MitVorname, MitGebDat, (Year(CURRENT_TIMESTAMP) - YEAR(MitGebDat)) as 'Alter' from Mitarbeiter
+--b)
+Select (AVG(Day(ErlDat)-Day(AufDat))) as Auftragsfrist From Auftrag Where Month(ErlDat) Like month(getdate());
+--c)
+Select COALESCE(Dauer, 0) From Auftrag;
 
+--2.3
+--a)
+select Count(Distinct KunNr) From Kunde;
+--b)
+select Count(Distinct KunNr) As KunImOrt, KunOrt From Kunde Group by KunOrt;
+--c)
+Select Avg(Dauer), MItID from Auftrag Where MitID is not Null Group By MitID;
+--d)
+Select Avg(Dauer) as AVGDauer ,MIN(Dauer) as MINDauer,Max(Dauer) As MaxDauer, MItID from Auftrag Where MitID is not Null Group By MitID;
+--e)
+Select Avg(Dauer), MItID, ErlDat, (Count(AufNr)) from Auftrag Where MitID is not Null and Dauer is not Null Group By MitID, ErlDat;
+--f)
+Select Min(ErlDat) from Auftrag Where ErlDat is not Null And Dauer is Null;
+
+--2.4
+--a
+Select MitJob, avg(datediff(Year, MitGebDat, getdate())) From Mitarbeiter Group By MitJob;
+--b
+SELECT MitID, avg(Dauer), (datepart(WEEKDAY,ErlDat)) As Wochentag
+From Auftrag 
+Where MitID is not NULL
+Group by MitId, (datepart(WEEKDAY,ErlDat));
+
+--)2.5
