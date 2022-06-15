@@ -97,3 +97,31 @@ Where MitID is not NULL
 Group by MitId, (datepart(WEEKDAY,ErlDat));
 
 --)2.5
+--a)
+Select AufNr, EtBezeichnung, Anzahl, EtPreis, Anzahl*EtPreis as Gesamtpreis
+From Montage m JOIN Ersatzteil e on m.EtID = e.EtID 
+Order By AufNr;
+--b)
+Select AufNr, Dauer* MitStundensat as Lohnkosten from Auftrag a Join Mitarbeiter M on A.MitID = m.MitId WHERE Dauer is not NULL;
+
+
+--c)
+select KunName, KunOrt, Anfahrt from Kunde K Join  Auftrag A on K.KunNr = A.KunNr where Anfahrt > 50;
+
+--d)
+select KunNr from Auftrag A Join Montage M on A.AufNr = M.AufNr where EtID = 'H0230' And datediff(month,getdate(),ErlDat) <= 02;
+
+--e)
+select a.Aufnr,
+	SUM(m.Anzahl*e.EtPreis) as Materialkosten,
+	AVG(Dauer*i.MitStundensat) as Lohnkosten,
+	AVG(a.Anfahrt)*0.2 as Fahrtkosten
+from Auftrag a Join Montage m on m.AufNr=a.Aufnr Join Mitarbeiter i on i.MitID=a.MitID Join Ersatzteil e on e.EtID=m.EtID Group by a.Aufnr
+
+--f)
+select a.Aufnr, a.AufDat, m.Mitname from Auftrag a left Join Mitarbeiter m on a.MitID=m.MitID where MONTH(a.AufDat) = MONTH(GETDATE());
+
+--g)
+select e.EtID, Sum(m.Anzahl)
+from Ersatzteil e Join Montage m on m.EtID = e.EtID Join ( select* from Auftrag where Month(ErlDat) = Month(GETDATE()) -1) a on a.Aufnr = m.AufNr
+Group by e.EtID;
