@@ -125,3 +125,48 @@ select a.Aufnr, a.AufDat, m.Mitname from Auftrag a left Join Mitarbeiter m on a.
 select e.EtID, Sum(m.Anzahl)
 from Ersatzteil e Join Montage m on m.EtID = e.EtID Join ( select* from Auftrag where Month(ErlDat) = Month(GETDATE()) -1) a on a.Aufnr = m.AufNr
 Group by e.EtID;
+
+--2.6
+--a)
+select m.MitID, m.MiTName, m.MitVorname
+from Mitarbeiter m
+Where not exists(select a.MitID from Auftrag a Where Month(AufDat) = Month(getdate()) and (Year(AufDat) = Year(getdate())) And a.MitID = m.MitID);
+
+--b) 
+Select  a.Aufnr,
+		(Dauer*m.MitStundensat) as Lohnkosten,
+		(a.Anfahrt)*0.2 as Fahrtkosten
+From Auftrag a Join Mitarbeiter m on a.MitID = m.MitId 
+Where (not exists(Select n.EtId from Montage n Where a.Aufnr = n.AufNR)) and a.Dauer is not null
+
+--anders)
+Select  a.Aufnr,
+		(Dauer*m.MitStundensat) as Lohnkosten,
+		(a.Anfahrt)*0.2 as Fahrtkosten
+from Auftrag a Join Mitarbeiter m on a.MitID = m.MitId 
+Where a.Aufnr not in (Select AufNr From Montage) and a.Dauer is not null
+
+--c)
+Select Aufnr 
+from Auftrag
+Where ErlDat = (Select Min(ErlDat) from Auftrag Where ErlDat is not Null And Dauer is Null);
+
+--d)
+Select KunNr 
+From Auftrag 
+Where KunNr not in (Select KunNR From Auftrag Where Month(AufDat) != 3);
+
+--e)
+--Korreliert
+Select MitId, a1.Aufnr, Dauer
+from Auftrag a1
+where Dauer = (Select max(dauer) from Auftrag a2 Where a1.MitId = a2.MitID)
+Group by MitId, Dauer, a1.AufNr
+
+--unkorrelliert
+Select a1.MitId, a1.Aufnr, a2.MaxDauer
+from Auftrag a1, (Select mitid, max(dauer) MaxDauer from Auftrag where dauer is not null group by mitid) as a2
+where a1.mitid=a2.mitid
+and a1.dauer=a2.MaxDauer
+Group by a1.MitId, a1.Aufnr, a2.MaxDauer
+
