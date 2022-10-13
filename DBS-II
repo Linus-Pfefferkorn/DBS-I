@@ -1,0 +1,71 @@
+-- 1. Praktikum Wiederhohlung
+
+-- 2. Erweiterung des Datenmodelles
+--a)
+SELECT Distinct LEFT (KunPLZ, 2)
+from Kunde
+
+--b)
+SELECT * INTO Niederlassung from trommelhelden..quelleNiederlassung
+Alter table Niederlassung add primary key (NLNr)
+
+SELECT * into Gebiet from trommelhelden..quelleGebiet
+Alter table Gebiet add primary key (GebietID)
+Alter Table Gebiet add Foreign key (NLNr) references Niederlassung (NLNr)
+
+Select * from Niederlassung
+Select * from Gebiet
+
+--c)
+SELECT * From Mitarbeiter
+Alter Table Mitarbeiter Add NLNr int default null
+
+--d) 
+Update Mitarbeiter 
+SET NLNr = (select N.NLNr from Niederlassung N where n.Ort LiKE Mitarbeiter.MitEinsatzort
+
+--e)
+Alter table Mitarbeiter Drop column MitEinsatzort
+
+--f)
+ALter Table Mitarbeiter ADD Foreign key (NLNr) references Niederlassung (NLNr)
+
+-- 3. Datenmodell
+select AufNr
+from Auftrag
+where MitID in (Select MitID from Mitarbeiter Where MItJob = 'Meister')
+
+SELECT MitName
+From Mitarbeiter 
+Where NLNr in (Select NLNr from Niederlassung where Ort = 'Dresden')
+
+SELECT AufNr
+From Auftrag
+Where MitID in (Select MitID from Mitarbeiter Where MitStundensat > 80)
+
+--4.Daten importieren
+Select * From Auftrag
+Select * From Montage
+insert into Auftrag Select * from trommelhelden..quelledbs2Auftrag
+insert into Montage Select * from trommelhelden..quelledbs2Montage
+
+--tabelle Rechnung
+Create Table Rechnung(
+KunNr int Not null,
+AufNR int Not null,
+RechDAt date not null,
+RechBetrag smallmoney not null,
+ Primary Key(KunNR,AufNR))
+
+ Alter table Rechnung add foreign key (KunNr) references Kunde (KunNr)
+ Alter table Rechnung add foreign key (AufNr) references Auftrag (Aufnr)
+
+ --6.View
+  Create View Zuständigkeit AS
+  Select a.Aufnr, a.KunNr ,m.MitId 
+  From Auftrag a 
+  join Kunde k on a.KunNr = k.KunNr
+  join Gebiet g on g.GebietID = Left(KunPLZ, 2)
+  join Mitarbeiter m on m.NLNr = g.NLNr
+  Where a.MitID is null
+  select * from Zuständigkeit
