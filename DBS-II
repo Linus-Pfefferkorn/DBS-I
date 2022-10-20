@@ -69,3 +69,75 @@ RechBetrag smallmoney not null,
   join Mitarbeiter m on m.NLNr = g.NLNr
   Where a.MitID is null
   select * from Zuständigkeit
+
+  --Meilenstein 2
+  -- 4
+  CREATE TABLE artikel (
+ aid INT PRIMARY KEY,
+ bezeichnung VARCHAR(30),
+ bestand INT CHECK (bestand>=0),
+ preis DECIMAL(10,2) CHECK (preis>=0)
+)
+INSERT INTO artikel VALUES(111, 'Stuhl', 1200, 23.60)
+INSERT INTO artikel VALUES(112, 'Sofa', 100, 223.60)
+INSERT INTO artikel VALUES(113, 'Sessel', 66, 123.60)
+INSERT INTO artikel VALUES(115, 'Tisch', 20, 20.00)
+INSERT INTO artikel VALUES(117, 'Regal', 12, 3.99)
+
+--a)
+
+begin transaction
+Select * from artikel
+Update artikel 
+set bezeichnung = 'Couch'
+Where bezeichnung = 'Sofa'
+
+Select * from artikel
+rollback
+Select * From artikel
+--b)
+
+begin transaction
+Select * from artikel
+Update artikel 
+set bezeichnung = 'Couch'
+Where bezeichnung = 'Sofa'
+
+Commit
+Select * From artikel
+
+--c)
+begin transaction 
+Select * from artikel
+Set XACT_ABORT on
+declare @menge_sessel int= 10
+declare @menge_tisch int= 10 
+Update artikel
+Set bestand -= @menge_sessel
+where bezeichnung = 'Sessel'
+Update artikel
+Set bestand -= @menge_tisch
+where bezeichnung = 'Tisch'
+select * from artikel
+rollback
+select * from artikel
+
+-- korrektur und so 
+Update artikel
+set bestand +=10 
+where bezeichnung = 'Sessel'
+
+begin transaction 
+Select * from artikel
+Set XACT_ABORT on
+declare @menge_sessel2 int= 25
+declare @menge_tisch2 int= 25
+Update artikel
+Set bestand -= @menge_sessel2
+where bezeichnung = 'Sessel'
+Update artikel
+Set bestand -= @menge_tisch2
+where bezeichnung = 'Tisch'
+select * from artikel
+rollback
+select * from artikel
