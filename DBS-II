@@ -141,3 +141,91 @@ where bezeichnung = 'Tisch'
 select * from artikel
 rollback
 select * from artikel
+
+--4. d)
+Begin Transaction T4d
+	Declare @menge_stuhl Int;
+	Set @menge_stuhl = 500;
+	Declare @summe Int;
+	Update artikel set bestand += @menge_stuhl where bezeichnung ='Stuhl'
+	Set @summe = (Select Sum(bestand) from artikel);
+	if(@summe > 2000)
+		Begin
+		Print 'Das war zu viel :( Maximal 2000 Artikel'
+		rollback
+		end 
+	else
+		begin
+		Print 'Ok Meister hab ich gemacht'
+		commit
+		end
+Select Sum(bestand) from artikel
+Update artikel set bestand -= 500 where bezeichnung ='Stuhl'
+
+--5 a)
+
+-- T1
+SET TRANSACTION ISOLATION LEVEL
+repeatable read
+BEGIN TRANSACTION
+-- r1(A)
+SELECT aid,preis FROM Artikel
+WHERE aid=111
+waitfor delay '00:00:10'
+--w1(B)
+UPDATE Artikel set bestand=500
+WHERE aid = 113
+COMMIT
+
+-- T2
+SET TRANSACTION ISOLATION LEVEL
+READ UNCOMMITTED
+BEGIN TRANSACTION
+-- r2(B)
+SELECT aid,bestand FROM Artikel
+WHERE aid = 113
+waitfor delay '00:00:10'
+-- w2(A)
+UPDATE Artikel set preis=350
+WHERE aid=111
+COMMIT
+
+--a)
+--Hier entsteht kein deadlock da das Read uncommitted nur kurze x-Sperren verwendet und damit das lesen bzw schreiben nicht beeinflusst wird
+--b
+--Hier entsteht kein Deadlock da das Read Committed nur Lange x-Sperren und kurze sSperren verwendet und da nach dem Schreiben kein lesen mehr stattfindet
+--c) 
+--Hier entsteht ein Deadlock weil eine Lange S-Sperre den Schreibvorgang beider objekte verhindert
+
+--)d
+--T1
+SET TRANSACTION ISOLATION LEVEL
+repeatable read
+BEGIN TRANSACTION
+-- r1(A)
+SELECT aid,preis FROM Artikel
+WHERE aid=111
+waitfor delay '00:00:10'
+--w1(B)
+UPDATE Artikel set bestand=500
+WHERE aid = 113
+Update Artikel set bestand=20
+where aid = 115
+COMMIT
+
+select * from artikel
+
+--e)
+-- T2
+SET TRANSACTION ISOLATION LEVEL
+repeatable read
+set DEADLOCK_PRIORITY  high
+BEGIN TRANSACTION
+-- r2(B)
+SELECT aid,bestand FROM Artikel
+WHERE aid = 113
+waitfor delay '00:00:10'
+-- w2(A)
+UPDATE Artikel set preis=350
+WHERE aid=111
+COMMIT
