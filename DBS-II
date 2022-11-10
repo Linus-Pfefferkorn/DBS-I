@@ -271,7 +271,7 @@ Select EtID, EtBezeichnung, EtAnzLager From MindestET(@Mindest)
 --Default
 Alter Table Mitarbeiter Add Constraint DF_Tätigkeit Default 'Monteur' For MitJob
 Select * from Mitarbeiter
-Insert into Mitarbeiter (MitID, MitName, MitVorname, MitGebDat, MitStundensatz, NLNr) Values (113, 'Pfund', 'Robert', GetDate(), 80, 1)
+Insert into Mitarbeiter (MitID, MitName, MitVorname, MitGebDat, MitStundensat, NLNr) Values (113, 'Pfund', 'Robert', GetDate(), 80, 1)
 
 Alter Table Auftrag Add Constraint DF_Eingang Default Getdate() For AufDat
 Select * from Auftrag
@@ -292,3 +292,41 @@ Alter table Montage add constraint fk_Aufnr foreign key (Aufnr) references Auftr
 Select * from Auftrag
 Select * from Montage
 Select Min(AufDat) from Auftrag Where month(AufDat)=5
+
+--3 Trigger
+CREATE TRIGGER Stundensatz_Trigger
+ON Mitarbeiter
+AFTER
+INSERT , UPDATE, DELETE
+AS 
+IF ((Select COUNT(*) From Inserted m where (m.MitJob LIKE 'Monteur' or m.MitJob like 'Meister') and m.MitStundensat  is null) > 0)
+BEGIN 
+RAISError ('Für Meister und Monteure müssen Stundensätze angegeben werden', 16, 10)
+ROLLBACK
+End
+
+Drop Trigger Stundensatz_Trigger
+--a) funktioniert
+insert into Mitarbeiter (MitID, MiTName, MitVorname, MitGebDat, MitJob) Values (114, 'Freund', 'Kevin', Convert (date,'2000-01-01'), 'Azubi')
+--b) Trigger setzt ein
+Update Mitarbeiter 
+Set MItJob = 'Monteur'
+where MitId = 114
+SELECT * From Mitarbeiter
+--c)
+Update Mitarbeiter 
+Set MItJob = 'Monteur', MitStundensat = 80
+where MitId = 114
+SELECT * From Mitarbeiter
+
+
+--3.2
+Create Trigger Rechnung_Erledigt 
+On Rechnung 
+After insert, Update AS
+IF ((Select Count(*) from inserted i join Auftrag a on i.AufNr = a.AufNR Where (a.ErlDat is null or a.Dauer is null or a.Anfahrt is null)) > 0)  
+BEGIN 
+RAISError ('Rechnung kann noch nicht verbucvht werden weil auftrag noch nicht beendet ist', 16, 10)
+ROLLBACK
+End
+
