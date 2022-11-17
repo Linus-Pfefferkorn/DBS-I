@@ -324,9 +324,115 @@ SELECT * From Mitarbeiter
 Create Trigger Rechnung_Erledigt 
 On Rechnung 
 After insert, Update AS
-IF ((Select Count(*) from inserted i join Auftrag a on i.AufNr = a.AufNR Where (a.ErlDat is null or a.Dauer is null or a.Anfahrt is null)) > 0)  
+IF ((Select Count(*) from inserted i join Auftrag a on i.AufNr = a.AufNR Where (Rechbetrag < a.Anfahrt * 2.5 or a.ErlDat is null or a.Dauer is null or a.Anfahrt is null)) > 0)  
 BEGIN 
 RAISError ('Rechnung kann noch nicht verbucvht werden weil auftrag noch nicht beendet ist', 16, 10)
 ROLLBACK
 End
 
+Drop trigger Rechnung_Erledigt
+Select * From Rechnung
+
+--a)i)
+Insert into Rechnung (KunNr, AufNR, RechDAt, RechBetrag) values (1281, 10026, Convert (date,'2022-10-15'), 154.50)
+--Funktioniert nicht 
+--ii)
+Insert into Rechnung (KunNr, AufNR, RechDAt, RechBetrag) values (1152, 10218, Convert (date,'2022-10-15'), 180.00)
+--Funktioniert nicht 
+--iii) 
+Insert into Rechnung (KunNr, AufNR, RechDAt, RechBetrag) values (1213, 10164, Convert (date,'2022-10-16'), 65)
+--Funktioniert
+
+--b)
+INSERT INTO Rechnung SELECT KunNr, AufNr, Erldat, 180
+FROM Auftrag WHERE AufNr IN (10050,10052,10060)
+--Wird vom Trigger aufgefangen
+
+INSERT INTO rechnung SELECT kunnr, aufnr, erldat, 135
+FROM auftrag WHERE aufnr IN (10056,10059,10061)
+--Funktioniert
+
+--3.3
+Alter Table Auftrag alter column Beschreibung varchar(200)
+
+Select * from auftrag
+
+CREATE TABLE protokoll_Auftrag
+(AufNr int, 
+MtiID char(3),
+KunNr int,
+AufDat date,
+ErlDat date , 
+Dauer decimal(5,1),
+Anfahrt int ,
+Beschreibung varchar(200),
+Benutzer char(20) Null,
+Zeit datetime NULL,
+Aenderungen varchar(100) null)
+
+CREATE TABLE protokoll_Montage
+(EtId char(5),
+AufNr int, 
+Anzahl int,
+Benutzer char(20) Null,
+Zeit datetime NULL,
+Aenderungen varchar(100) null)
+
+Create Trigger loeschprotokoll_Auftrag on Auftrag
+For Delete as 
+Begin 
+	select * from deleted 
+	Raiserror ('Fehler bei löschen im Auftrag',16,10)
+rollback 
+end
+
+--Droppen
+drop trigger loeschprotokoll_Auftrag
+
+
+Create Trigger loeschprotokoll_Montage on Montage 
+For Delete as 
+Begin 
+	select * from deleted 
+	Raiserror ('Fehler bei löschen im Montage',16,10)
+rollback 
+end
+
+--droppen
+drop trigger loeschprotokoll_Montage
+
+Delete from Auftrag where AufDat = '2022-05-11'
+
+--korrektur und so
+insert into Auftrag Select * FROM trommelhelden..quelleAuftrag where AufDat = '2022-05-11'
+
+--e) 
+
+CREATE TRIGGER Protokoll_Loeschen_Auftrag ON Auftrag
+FOR Delete
+AS
+BEGIN
+Insert into protokoll_Auftrag
+SELECT *, SYSTEM_USER, getdate(), 'delete'
+FROM deleted 
+END
+
+drop trigger Protokoll_Loeschen_Auftrag
+
+CREATE TRIGGER Protokoll_Loeschen_Montage ON Montage
+FOR Delete
+AS
+BEGIN
+Insert into protokoll_Montage
+SELECT *, SYSTEM_USER, getdate(), 'delete'
+FROM deleted 
+END
+
+drop trigger Protokoll_Loeschen_Montage
+
+BEGIN TRANSACTION
+delete from Auftrag where ErlDat is not null and month(ErlDat)=5 
+Select * from protokoll_Auftrag
+Select * from protokoll_Montage
+
+rollback
